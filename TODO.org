@@ -1,0 +1,33 @@
+* DONE Save extension of tail as well
+* DONE Link Status bar to hovering
+* DONE Fix button disables in modes
+* DONE Fix frame setting on loading data
+* TODO Make Github page
+* TODO Fix PNG zooming, panning - reenable support
+* DONE Update Frame numbers in label on changing image
+* DONE Fix label numbers in status bar - copy code from hovering
+* DONE Save data to file and to data viewer
+* DONE Sort out recalculating angle on changing base line
+* DONE Fix regression in flashing when going previous frame
+* DONE Modify NextFrame to depend on clickstate
+* DONE Link up instructions
+* DONE Add ability to go back - loading previous points
+* DONE Add solid state management - can exit and enter different states without possibility of crashing
+* DONE Sort out sensitivity of buttons with respect to states
+* DONE Add parallel line through tail base
+* DONE Show frame number in instructions
+* DONE Press escape to cancel current line
+* DONE Add button to set current line mode
+* DONE Display current line mode
+* TODO Add keyboard shortcuts for graph management - undo button
+* TODO Add help screen
+* DONE Add clicking to draw lines - save baseline for all images - http://stackoverflow.com/questions/5021663/how-to-draw-a-line-outside-of-an-axis-in-matplotlib-in-figure-coordinates
+* DONE MPL event handling: http://matplotlib.org/users/event_handling.html
+* DONE Work out how to calculate angles - use vectors from start,endpoints angle is same, dotproduct
+* DONE Link up tool bar items
+* DONE Save data - can edit points, recalculate, etc. but data always being saved
+* TODO Add stuff to calculate useful data - cycles, etc.
+* DONE Speed up loading arrays - deleting and redrawing the problem
+* DONE Add ability to load data file to continue session
+* TODO Fix bugs in file loading window
+* TODO Tidy functions - image creation, etc.
