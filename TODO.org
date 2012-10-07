@@ -2,7 +2,7 @@
 * DONE Link Status bar to hovering
 * DONE Fix button disables in modes
 * DONE Fix frame setting on loading data
-* TODO Make Github page
+* DONE Make Github page
 * TODO Fix PNG zooming, panning - reenable support
 * DONE Update Frame numbers in label on changing image
 * DONE Fix label numbers in status bar - copy code from hovering

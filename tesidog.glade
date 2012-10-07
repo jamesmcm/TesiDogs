@@ -13,7 +13,7 @@
     <property name="deletable">False</property>
     <property name="select_multiple">True</property>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="filechooserdialog-vbox1">
+      <object class="GtkBox" id="filechooserdialog-vbox1">
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
@@ -470,7 +470,6 @@
           <object class="GtkVBox" id="box3">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
             <child>
               <object class="GtkTextView" id="dataview">
                 <property name="visible">True</property>
@@ -487,7 +486,7 @@
               <object class="GtkLabel" id="label5">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Load previous data file (.pkl):</property>
+                <property name="label" translatable="yes">Load previous data file (.pkl): (Load Frame images first!)</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -528,11 +527,13 @@
           <object class="GtkLabel" id="label4">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="label" translatable="yes">I forgot how to remove additional pages, so this is here :P
+            <property name="label" translatable="yes">
+Created by James McMurray &lt;jamesmcm03@gmail.com&gt;
 
-Programmed by James McMurray
+Github page: https://github.com/jamesmcm/TesiDogs
 
-</property>
+Code available under permissive licenses.</property>
+            <property name="selectable">True</property>
           </object>
           <packing>
             <property name="position">2</property>
