@@ -13,6 +13,7 @@ import sys
 import math
 import datetime
 import pickle
+import Image #test for PIL
 try:
     import pygtk
     pygtk.require("2.0")
@@ -42,10 +43,17 @@ class TesiDogs:
 	    filterplot.set_name("BMP")
 	    filterplot.add_pattern("*.bmp")
 	    filterplot.add_pattern("*.BMP")
+
+
+	    filterplot2 = gtk.FileFilter()
+	    filterplot2.set_name("PKL")
+	    filterplot2.add_pattern("*.pkl")
+	    filterplot2.add_pattern("*.PKL")
 	    #filterplot.add_pattern("*.PNG")
 	    #filterplot.add_pattern("*.png")
 
 	    self.builder.get_object("filechoose").add_filter(filterplot)
+	    self.builder.get_object("pklchoose").add_filter(filterplot2)
 	    self.images=[]
 	    self.clickstate="none"
             self.linewidth=3.
@@ -62,6 +70,7 @@ class TesiDogs:
             self.datastr=None
 	    self.builder.get_object("autorunbtn").set_sensitive(0)
 	    self.builder.get_object("toolbar1").set_sensitive(0)
+	    self.builder.get_object("pklchoose").set_sensitive(0)
             self.origin="lower"
             now = datetime.datetime.now()
             self.timestr=now.strftime("%d_%m_%H%M")
@@ -106,7 +115,7 @@ class TesiDogs:
 		self.canvas.mpl_connect('motion_notify_event', self.HoverOnImage)
 		self.canvas.mpl_connect('button_release_event', self.CaptureClick)
 		self.builder.get_object("npbox").pack_start(self.canvas, True, True)
-		self.builder.get_object("fwdbtn").set_sensitive(1)
+                self.builder.get_object("pklchoose").set_sensitive(1)
 		self.SetClickState("base1")
 		self.UpdateInstructions("Zoom in and click two points along the dog's feet to draw the base line")
 	def LoadNextFrame(self, widget):
@@ -138,11 +147,13 @@ class TesiDogs:
                         self.currentbase1=(self.points[self.frame]["base1"][0], self.points[self.frame]["base1"][1])
                         self.currentbase2=(self.points[self.frame]["base2"][0], self.points[self.frame]["base2"][1])
 			self.axis.add_line(self.baseline)
+                        self.DrawParallelLine()
 
 
 		elif (self.points[self.frame]["base2"] == None) and (self.currentbase2!=None): #if not line, use previous one
 			self.baseline = lines.Line2D(np.array([self.currentbase1[0],self.currentbase2[0]]), np.array([self.currentbase1[1],self.currentbase2[1]]), lw=self.linewidth, color='r', alpha=0.9)
 			self.axis.add_line(self.baseline)
+                        self.DrawParallelLine()
 
                 if self.clickstate=="none":
                     self.UpdateInstructions("Browsing mode. Use toolbar buttons to edit points. Autorun disabled. Frame " + str(self.frame+1) + "/" + str(len(self.filenames)))
@@ -150,17 +161,17 @@ class TesiDogs:
 			self.tailline = lines.Line2D(np.array([self.points[self.frame]["tail1"][0],self.points[self.frame]["tail2"][0]]), np.array([self.points[self.frame]["tail1"][1],self.points[self.frame]["tail2"][1]]), lw=self.linewidth, color='b', alpha=0.9)
 			self.axis.add_line(self.tailline)
                         self.currenttail1=(self.points[self.frame]["tail1"][0], self.points[self.frame]["tail1"][1]) #bad hack to fix parallel line
-                        if (self.frame-1>=0):
-                            self.builder.get_object("backbtn").set_sensitive(1)
-                        else:
-                            self.builder.get_object("backbtn").set_sensitive(0)                            
+                    if (self.frame-1>=0):
+                        self.builder.get_object("backbtn").set_sensitive(1)
+                    else:
+                        self.builder.get_object("backbtn").set_sensitive(0)                            
 
-                        if (len(self.filenames)<=self.frame+1):
-                            self.builder.get_object("fwdbtn").set_sensitive(0)
-                        else:
-                            self.builder.get_object("fwdbtn").set_sensitive(1)     
+                    if (len(self.filenames)<=self.frame+1):
+                        self.builder.get_object("fwdbtn").set_sensitive(0)
+                    else:
+                        self.builder.get_object("fwdbtn").set_sensitive(1)     
                     
-                self.DrawParallelLine()
+
 		self.canvas.draw()
 
         
@@ -188,7 +199,7 @@ class TesiDogs:
                     self.axis.add_line(self.baseline)
                     self.currentbase1=(self.points[self.frame]["base1"][0], self.points[self.frame]["base1"][1])
                     self.currentbase2=(self.points[self.frame]["base2"][0], self.points[self.frame]["base2"][1])
-
+                    self.DrawParallelLine()
 
                 if self.clickstate=="none":
                     self.UpdateInstructions("Browsing mode. Use toolbar buttons to edit points. Autorun disabled. Frame " + str(self.frame+1) + "/" + str(len(self.filenames)))
@@ -197,20 +208,16 @@ class TesiDogs:
 			self.axis.add_line(self.tailline)
                         self.currenttail1=(self.points[self.frame]["tail1"][0], self.points[self.frame]["tail1"][1]) #bad hack to fix parallel line
 
-                        if (len(self.filenames)<=self.frame+1):
-                            self.builder.get_object("fwdbtn").set_sensitive(0)
-                        else:
-                            self.builder.get_object("fwdbtn").set_sensitive(1)
+                    if (len(self.filenames)<=self.frame+1):
+                        self.builder.get_object("fwdbtn").set_sensitive(0)
+                    else:
+                        self.builder.get_object("fwdbtn").set_sensitive(1)
 	    
-                        if (self.frame-1<0):
-                            self.builder.get_object("backbtn").set_sensitive(0)
-                        else:
-                            self.builder.get_object("backbtn").set_sensitive(1)
+                    if (self.frame-1<0):
+                        self.builder.get_object("backbtn").set_sensitive(0)
+                    else:
+                        self.builder.get_object("backbtn").set_sensitive(1)
                             
-
-                
-                self.DrawParallelLine()
-
 		self.canvas.draw()
         
 	def HoverOnImage(self, event):
@@ -401,18 +408,26 @@ class TesiDogs:
                 self.builder.get_object("fwdbtn").set_sensitive(0)
 
             elif clickstate=="tail2":
-                self.UpdateInstructions("Click the end of the tail. Frame " + str(self.frame+1) + "/" + str(len(self.filenames)))
-                if self.tailline!=None:
-                    self.tailline.set_data(np.array([0,0]),np.array([0,0]))
-                    self.canvas.draw()
+                if self.points[self.frame]["tail1"]==None:
+                    self.SetClickState("none")
+                    if self.curid!=None:
+                        self.builder.get_object("statusbar").remove_message(self.conid, self.curid)
+                
+                    self.curid=self.builder.get_object("statusbar").push(self.conid, "Error: First tail point not set!")
+                    return None
+                else:
+                    self.UpdateInstructions("Click the end of the tail. Frame " + str(self.frame+1) + "/" + str(len(self.filenames)))
+                    if self.tailline!=None:
+                        self.tailline.set_data(np.array([0,0]),np.array([0,0]))
+                        self.canvas.draw()
 
-                self.builder.get_object("nolinebtn").set_sensitive(1) 
-                self.builder.get_object("basebtn").set_sensitive(0) 
-                self.builder.get_object("tailbtn").set_sensitive(0) 
-                self.builder.get_object("tailendbtn").set_sensitive(0) 
+                    self.builder.get_object("nolinebtn").set_sensitive(1) 
+                    self.builder.get_object("basebtn").set_sensitive(0) 
+                    self.builder.get_object("tailbtn").set_sensitive(0) 
+                    self.builder.get_object("tailendbtn").set_sensitive(0) 
 
-                self.builder.get_object("backbtn").set_sensitive(0)
-                self.builder.get_object("fwdbtn").set_sensitive(0)
+                    self.builder.get_object("backbtn").set_sensitive(0)
+                    self.builder.get_object("fwdbtn").set_sensitive(0)
                 
             #Push changed message to statusbar
             self.clickstate=clickstate
