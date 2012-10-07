@@ -76,6 +76,8 @@
   <object class="GtkWindow" id="mainwindow">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="default_width">1024</property>
+    <property name="default_height">768</property>
     <signal name="destroy" handler="mainwindowdestroy" swapped="no"/>
     <signal name="key-release-event" handler="mainwindowkeypress" swapped="no"/>
     <child>
@@ -97,7 +99,7 @@
                 <signal name="clicked" handler="loadframesbtnclicked" swapped="no"/>
               </object>
               <packing>
-                <property name="expand">True</property>
+                <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
@@ -109,7 +111,7 @@
                 <property name="label" translatable="yes">Instructions: First load the image</property>
               </object>
               <packing>
-                <property name="expand">True</property>
+                <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">1</property>
               </packing>
@@ -125,7 +127,7 @@
                 </child>
               </object>
               <packing>
-                <property name="expand">False</property>
+                <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">2</property>
               </packing>
