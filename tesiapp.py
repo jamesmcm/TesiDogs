@@ -3,6 +3,8 @@
 
 #import subprocess
 #import os
+import matplotlib
+matplotlib.use('GTK')
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg  
 import numpy as np
 import matplotlib.image as mpimg
@@ -14,18 +16,8 @@ import math
 import datetime
 import pickle
 import Image #test for PIL
-try:
-    import pygtk
-    pygtk.require("2.0")
-except:
-    pass
-
-try:
-    import gtk
-    import gtk.glade
-
-except:
-    sys.exit(1)
+import pygtk
+import gtk
 
 class TesiDogs:
 	"""This is the application main class - there is only one class because socialists don't believe in the class system."""
