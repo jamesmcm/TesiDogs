@@ -294,6 +294,8 @@ class TesiDogs:
 		#base can be changed per frame but is assumed from previous frame by default
 		if self.clickstate=="none":
 			return 0
+		elif event.x==None or event.y==None or event.xdata==None or event.ydata==None:
+			return 0
 		elif self.clickstate=="base1":
 			self.currentbase1=(int(round(event.xdata)), int(round(event.ydata)))
 			self.points[self.frame]["base1"]=(int(round(event.xdata)), int(round(event.ydata)))
@@ -338,9 +340,11 @@ class TesiDogs:
 
 
         def DrawParallelLine(self):
+            if self.currenttail1==None:
+		    return 0;
             basem=(float(self.currentbase2[1]-self.currentbase1[1]))/(float(self.currentbase2[0]-self.currentbase1[0]))
             c=self.currentbase2[1]-(basem*self.currentbase2[0])
-            ydiff=self.currenttail1[1]-((basem*self.currenttail1[0])+c)
+            ydiff=self.currenttail1[1]-((basem*self.currenttail1[0])+c) #fails if currenttail1==None - should never be called in this case
             self.paraline = lines.Line2D(np.array([self.currentbase1[0], self.currentbase2[0]]), np.array([self.currentbase1[1]+ydiff, self.currentbase2[1]+ydiff]), lw=self.linewidth, color='r', alpha=0.3)
             self.axis.add_line(self.paraline)
             self.canvas.draw()
