@@ -2,7 +2,7 @@
 #Abandon all hope, ye who enter here
 
 #import subprocess
-#import os
+import os
 import matplotlib
 matplotlib.use('GTK')
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg  
@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.image as mpimg
 from matplotlib.figure import Figure
 from matplotlib import lines
+from matplotlib.patches import Circle
 import matplotlib.pyplot as plt
 import sys
 import math
@@ -25,30 +26,25 @@ class TesiDogs:
 	def __init__(self):
 	    self.builder = gtk.Builder()
 	    self.builder.add_from_file("tesidog.glade")
-	    dic = {"mainwindowdestroy" : gtk.main_quit, "fwdbtnclicked" : self.LoadNextFrame, "backbtnclicked" : self.LoadPreviousFrame, "loadframesbtnclicked" : self.ShowFileDialog, "file1fileset":self.FileLoad, "cancelbtnclicked":self.CancelFileLoad, "zoomoutbtnclicked": self.ZoomOut, "zoominbtnclicked":self.ZoomIn, "panleftbtnclicked":self.PanLeft, "panrightbtnclicked":self.PanRight, "pandownbtnclicked":self.PanDown, "panupbtnclicked":self.PanUp, "mainwindowkeypress":self.GetKeyPress, "basebtnclicked":self.BaseButtonClicked, "tailbtnclicked":self.TailButtonClicked, "nolinebtnclicked":self.NoLineButtonClicked, "drawtailendbtnclicked":self.DrawTailEndButtonClicked, "autorunbtnclicked":self.AutorunButtonClicked, "pklchoosefileset":self.PickleFileSet}
+	    dic = {"mainwindowdestroy" : gtk.main_quit, "fwdbtnclicked" : self.LoadNextFrame, "backbtnclicked" : self.LoadPreviousFrame, "file1fileset":self.FileLoad, "zoomoutbtnclicked": self.ZoomOut, "zoominbtnclicked":self.ZoomIn, "panleftbtnclicked":self.PanLeft, "panrightbtnclicked":self.PanRight, "pandownbtnclicked":self.PanDown, "panupbtnclicked":self.PanUp, "mainwindowkeypress":self.GetKeyPress, "basebtnclicked":self.BaseButtonClicked, "tailbtnclicked":self.TailButtonClicked, "nolinebtnclicked":self.NoLineButtonClicked, "drawtailendbtnclicked":self.DrawTailEndButtonClicked, "autorunbtnclicked":self.AutorunButtonClicked, "pklchoosefileset":self.PickleFileSet, "imagesavebtnclicked":self.ShowImageSaveDialog, "imagesaveokbtnclicked":self.SaveImageOkButtonClicked, "imagesavecancelbtnclicked":self.SaveImageCancelButtonClicked, "copytailbasepointbtnclicked":self.ShowCopyDialog, "copybaselinebtnclicked":self.ShowCopyDialog, "copyokbtnclicked":self.CopyOkButtonClicked, "copycancelbtnclicked":self.CopyCancelButtonClicked}
 	    self.builder.connect_signals(dic)
 
 	    self.conid=self.builder.get_object("statusbar").get_context_id("maps")        
 	    self.curid=None
 
-	    filterplot = gtk.FileFilter()
-	    filterplot.set_name("BMP")
-	    filterplot.add_pattern("*.bmp")
-	    filterplot.add_pattern("*.BMP")
-
-
+	    self.copybtn=None
 	    filterplot2 = gtk.FileFilter()
 	    filterplot2.set_name("PKL")
 	    filterplot2.add_pattern("*.pkl")
 	    filterplot2.add_pattern("*.PKL")
-	    #filterplot.add_pattern("*.PNG")
-	    #filterplot.add_pattern("*.png")
 
-	    self.builder.get_object("filechoose").add_filter(filterplot)
 	    self.builder.get_object("pklchoose").add_filter(filterplot2)
 	    self.images=[]
 	    self.clickstate="none"
             self.linewidth=3.
+	    self.circleradius=2
+	    self.circlealpha=0.4
+	    self.taillinealpha=0.7
 	    self.points=[]
 	    self.currentbase1=None
 	    self.currentbase2=None
@@ -72,22 +68,32 @@ class TesiDogs:
 		self.axis.clear()
 		self.hoverline=None
 		self.tailline=None
-	def ShowFileDialog(self, widget):
-		self.builder.get_object("filechoose").set_visible(1)
-
-	def CancelFileLoad(self, widget):
-		self.builder.get_object("filechoose").set_visible(0)
 
 	def FileLoad(self, widget):
 	        self.points=[]
-		self.filenames = self.builder.get_object("filechoose").get_filenames()
+		self.folder=widget.get_filenames()[0] #get full path
+		self.filenames = os.listdir(self.folder)
+		i=0
+		while i<len(self.filenames):
+			if self.filenames[i][-3:]!="BMP" and self.filenames[i][-3:]!="bmp":
+				self.filenames.pop(i)
+			else:
+				self.filenames[i]=self.folder+"/"+self.filenames[i]
+				i+=1
+
+		if len(self.filenames)==0:
+			if self.curid!=None:
+				self.builder.get_object("statusbar").remove_message(self.conid, self.curid)
+                
+			self.curid=self.builder.get_object("statusbar").push(self.conid, "Error: No BMPs in given folder!")
+			return 0
 		self.filenames.sort()
+
 
                 try:
                     self.datafilename=self.filenames[0].split("/")[-1].split("_")[0]+self.timestr+".dat"
                 except:
                     self.datafilename=self.filenames[0].split("/")[-1].split(".")[0]+self.timestr+".dat"
-                self.builder.get_object("filechoose").set_visible(0)
                 self.builder.get_object("toolbar1").set_sensitive(1)
                 if (self.filenames[0].split(".")[-1]=="bmp") or (self.filenames[0].split(".")[-1]=="BMP"):
                     self.origin="lower"
@@ -125,7 +131,7 @@ class TesiDogs:
 
 
 
-		if (self.frame >= len(self.points)): #if image unseen, prepare dictionary
+		if (self.frame >= len(self.points)): #if image unseen, prepare dictionary - this code disallows skipping, assumption is the mother of all fuckups
 			self.points.append({"base1":self.currentbase1, "base2":self.currentbase2, "tail1":self.currenttail1, "tail2":None, "angle":None, "side":None, "topbottom":None, "length":None})
 
 		img=self.images[self.frame]
@@ -142,7 +148,7 @@ class TesiDogs:
                         self.DrawParallelLine()
 
 
-		elif (self.points[self.frame]["base2"] == None) and (self.currentbase2!=None): #if not line, use previous one
+		elif (self.points[self.frame]["base2"] == None) and (self.currentbase2!=None): #if not line, use previous one, don't think this is ever run
 			self.baseline = lines.Line2D(np.array([self.currentbase1[0],self.currentbase2[0]]), np.array([self.currentbase1[1],self.currentbase2[1]]), lw=self.linewidth, color='r', alpha=0.9)
 			self.axis.add_line(self.baseline)
                         self.DrawParallelLine()
@@ -150,7 +156,7 @@ class TesiDogs:
                 if self.clickstate=="none":
                     self.UpdateInstructions("Browsing mode. Use toolbar buttons to edit points. Autorun disabled. Frame " + str(self.frame+1) + "/" + str(len(self.filenames)))
                     if self.points[self.frame]["tail2"] != None: #if already line, draw that one
-			self.tailline = lines.Line2D(np.array([self.points[self.frame]["tail1"][0],self.points[self.frame]["tail2"][0]]), np.array([self.points[self.frame]["tail1"][1],self.points[self.frame]["tail2"][1]]), lw=self.linewidth, color='b', alpha=0.9)
+			self.tailline = lines.Line2D(np.array([self.points[self.frame]["tail1"][0],self.points[self.frame]["tail2"][0]]), np.array([self.points[self.frame]["tail1"][1],self.points[self.frame]["tail2"][1]]), lw=self.linewidth, color='b', alpha=self.taillinealpha)
 			self.axis.add_line(self.tailline)
                         self.currenttail1=(self.points[self.frame]["tail1"][0], self.points[self.frame]["tail1"][1]) #bad hack to fix parallel line
                     if (self.frame-1>=0):
@@ -163,7 +169,6 @@ class TesiDogs:
                     else:
                         self.builder.get_object("fwdbtn").set_sensitive(1)     
                     
-
 		self.canvas.draw()
 
         
@@ -196,7 +201,7 @@ class TesiDogs:
                 if self.clickstate=="none":
                     self.UpdateInstructions("Browsing mode. Use toolbar buttons to edit points. Autorun disabled. Frame " + str(self.frame+1) + "/" + str(len(self.filenames)))
                     if self.points[self.frame]["tail2"] != None: #if already line, draw that one
-			self.tailline = lines.Line2D(np.array([self.points[self.frame]["tail1"][0],self.points[self.frame]["tail2"][0]]), np.array([self.points[self.frame]["tail1"][1],self.points[self.frame]["tail2"][1]]), lw=self.linewidth, color='b', alpha=0.9)
+			self.tailline = lines.Line2D(np.array([self.points[self.frame]["tail1"][0],self.points[self.frame]["tail2"][0]]), np.array([self.points[self.frame]["tail1"][1],self.points[self.frame]["tail2"][1]]), lw=self.linewidth, color='b', alpha=self.taillinealpha)
 			self.axis.add_line(self.tailline)
                         self.currenttail1=(self.points[self.frame]["tail1"][0], self.points[self.frame]["tail1"][1]) #bad hack to fix parallel line
 
@@ -307,6 +312,8 @@ class TesiDogs:
 
 			self.baseline = lines.Line2D(np.array([self.points[self.frame]["base1"][0],self.points[self.frame]["base2"][0]]), np.array([self.points[self.frame]["base1"][1],self.points[self.frame]["base2"][1]]), lw=self.linewidth, color='r', alpha=0.9)
 			self.axis.add_line(self.baseline)
+			if self.points[self.frame]["tail1"]!=None:
+				self.DrawParallelLine()
 			self.canvas.draw()
                         if self.points[self.frame]["tail2"]!=None:
                             self.CalculateAngle()
@@ -319,8 +326,9 @@ class TesiDogs:
 			self.currenttail1=(int(round(event.xdata)), int(round(event.ydata)))
 			self.points[self.frame]["tail1"]=(int(round(event.xdata)), int(round(event.ydata)))
 			self.SetClickState("tail2")
-                        #Draw parallel line
+                        #Draw parallel line and circle
                         self.DrawParallelLine()
+
 		elif self.clickstate=="tail2":
 
 			self.points[self.frame]["tail2"]=(int(round(event.xdata)), int(round(event.ydata)))
@@ -340,8 +348,17 @@ class TesiDogs:
 
 
         def DrawParallelLine(self):
-            if self.currenttail1==None:
+            if self.currenttail1==None and self.points[self.frame]["tail1"]==None:
 		    return 0;
+	    
+	    if self.points[self.frame]["tail1"]!=None:
+		    circle=Circle(self.points[self.frame]["tail1"], radius=self.circleradius, alpha=self.circlealpha, color="yellow") #put here because here has check for tail1
+	    else:
+		    circle=Circle(self.currenttail1, radius=self.circleradius, alpha=self.circlealpha, color="yellow") #put here because here has check for tail1		    
+	    self.axis.add_patch(circle)
+
+
+
             basem=(float(self.currentbase2[1]-self.currentbase1[1]))/(float(self.currentbase2[0]-self.currentbase1[0]))
             c=self.currentbase2[1]-(basem*self.currentbase2[0])
             ydiff=self.currenttail1[1]-((basem*self.currenttail1[0])+c) #fails if currenttail1==None - should never be called in this case
@@ -364,6 +381,9 @@ class TesiDogs:
                 self.builder.get_object("nolinebtn").set_sensitive(0) #Make noline button insensitive
                 self.builder.get_object("basebtn").set_sensitive(1) 
                 self.builder.get_object("tailbtn").set_sensitive(1) 
+                self.builder.get_object("tailendbtn").set_sensitive(1) 
+                self.builder.get_object("copytailbasepointbtn").set_sensitive(1) 
+                self.builder.get_object("copybaselinebtn").set_sensitive(1) 
                 self.builder.get_object("tailendbtn").set_sensitive(1) 
                 #Attempt to make next/prev buttons sensitive
                 if (self.frame-1>=0):
@@ -388,6 +408,8 @@ class TesiDogs:
                 self.builder.get_object("tailendbtn").set_sensitive(0) 
                 self.builder.get_object("backbtn").set_sensitive(0)
                 self.builder.get_object("fwdbtn").set_sensitive(0)
+                self.builder.get_object("copytailbasepointbtn").set_sensitive(0) 
+                self.builder.get_object("copybaselinebtn").set_sensitive(0) 
 
             elif clickstate=="base2":
                 self.UpdateInstructions("Click the second base point. Frame " + str(self.frame+1) + "/" + str(len(self.filenames)))
@@ -402,6 +424,8 @@ class TesiDogs:
 
                 self.builder.get_object("backbtn").set_sensitive(0)
                 self.builder.get_object("fwdbtn").set_sensitive(0)
+                self.builder.get_object("copytailbasepointbtn").set_sensitive(0) 
+                self.builder.get_object("copybaselinebtn").set_sensitive(0) 
 
             elif clickstate=="tail2":
                 if self.points[self.frame]["tail1"]==None:
@@ -424,6 +448,8 @@ class TesiDogs:
 
                     self.builder.get_object("backbtn").set_sensitive(0)
                     self.builder.get_object("fwdbtn").set_sensitive(0)
+		    self.builder.get_object("copytailbasepointbtn").set_sensitive(0) 
+		    self.builder.get_object("copybaselinebtn").set_sensitive(0) 
                 
             #Push changed message to statusbar
             self.clickstate=clickstate
@@ -583,11 +609,128 @@ class TesiDogs:
             self.points=pickle.load(picklefile)
             picklefile.close()
             self.datafilename=pklfilename[:-3]+"dat"
+            self.SaveData()
+	    i=0
+	    while i < len(self.points): #hopefully this works, might need to initialise full list
+		    if self.points[i]["tail2"]==None:
+			    self.frame=i
+			    break
+		    i+=1
+
+	    if i == len(self.points):
+		    if len(self.filenames)>len(self.points):
+			    self.frame = len(self.points)
+		    else:
+			    self.frame=0
+	    
             #redraw canvas, load data
             self.frame=self.frame-1
             self.LoadNextFrame(None)
-            self.SaveData()
-            self.SetClickState("none")
+	    if self.frame==0:
+		    self.SetClickState("none")
+	    else:
+		    #assumes these are defined
+		    self.currentbase1=(self.points[self.frame-1]["base1"][0], self.points[self.frame-1]["base1"][1])
+		    self.currentbase2=(self.points[self.frame-1]["base2"][0], self.points[self.frame-1]["base2"][1])
+		    self.currenttail1=(self.points[self.frame-1]["tail1"][0], self.points[self.frame-1]["tail1"][1])
+
+		    if self.points[self.frame]["base1"]==None:
+			    self.points[self.frame]["base1"]=self.currentbase1
+
+		    if self.points[self.frame]["base2"]==None:
+			    self.points[self.frame]["base2"]=self.currentbase2
+
+		    if self.points[self.frame]["tail1"]==None:
+			    self.points[self.frame]["tail1"]=self.currenttail1
+		    self.frame=self.frame-1
+		    self.LoadNextFrame(None)
+
+		    self.AutorunButtonClicked(None)
+		    self.SetClickState("tail2")
+
+
+	def ShowImageSaveDialog(self, widget):
+		self.builder.get_object("imagesavedialog").set_visible(1)
+
+	def SaveImageCancelButtonClicked(self, widget):
+		self.builder.get_object("imagesavedialog").set_visible(0)
+
+	def SaveImageOkButtonClicked(self, widget):
+		filename=self.builder.get_object("imagesavedialog").get_filenames()[0]
+		if filename[-4:]!=".png" and filename[-4:]!=".PNG":
+			filename=filename+".png"
+
+		self.figure.savefig(filename, format="png")
+		self.builder.get_object("imagesavedialog").set_visible(0)
+
+	def ShowCopyDialog(self, widget):
+		self.SetClickState("none")
+		if gtk.Buildable.get_name(widget) == "copybaselinebtn":
+			self.builder.get_object("copylabel").set_label("From which frame number (1-" + str(len(self.points))+") do you wish to copy the base line?")
+			self.copybtn="base"
+		else:
+			self.builder.get_object("copylabel").set_label("From which frame number (1-" + str(len(self.points))+") do you wish to copy the tail basepoint?")
+			self.copybtn="tail"
+		self.builder.get_object("copydialog").set_visible(1)
+		
+	def CopyCancelButtonClicked(self, widget):
+		self.builder.get_object("copydialog").set_visible(0)		
+
+	def CopyOkButtonClicked(self, widget):
+		try:
+			number=int(self.builder.get_object("entry1").get_text())
+		except:
+			self.builder.get_object("copydialog").set_visible(0)
+			if self.curid!=None:
+				self.builder.get_object("statusbar").remove_message(self.conid, self.curid)
+                
+			self.curid=self.builder.get_object("statusbar").push(self.conid, "Error: Frame number given was not an integer!")
+			return 0
+
+		if number>len(self.points) or number<1:
+			self.builder.get_object("copydialog").set_visible(0)
+			if self.curid!=None:
+				self.builder.get_object("statusbar").remove_message(self.conid, self.curid)
+                
+			self.curid=self.builder.get_object("statusbar").push(self.conid, "Error: Frame number was not within valid range!")
+			return 0
+			
+
+		if self.copybtn=="base":
+			if self.points[number-1]["base2"]==None:
+				self.builder.get_object("copydialog").set_visible(0)
+				if self.curid!=None:
+					self.builder.get_object("statusbar").remove_message(self.conid, self.curid)
+                
+				self.curid=self.builder.get_object("statusbar").push(self.conid, "Error: Frame does not have valid base line!")
+				return 0
+			else:
+				self.builder.get_object("copydialog").set_visible(0)
+				self.points[self.frame]["base1"]=self.points[number-1]["base1"]
+				self.currentbase1=self.points[number-1]["base1"]
+				self.points[self.frame]["base2"]=self.points[number-1]["base2"]
+				self.currentbase2=self.points[number-1]["base2"]
+				self.frame=self.frame-1
+				self.LoadNextFrame(None)
+
+		if self.copybtn=="tail":
+			if self.points[number-1]["tail1"]==None:
+				self.builder.get_object("copydialog").set_visible(0)
+				if self.curid!=None:
+					self.builder.get_object("statusbar").remove_message(self.conid, self.curid)
+                
+				self.curid=self.builder.get_object("statusbar").push(self.conid, "Error: Frame does not have valid tail basepoint!")
+				return 0
+			else:
+				self.builder.get_object("copydialog").set_visible(0)
+				self.points[self.frame]["tail1"]=self.points[number-1]["tail1"]
+				self.currenttail1=self.points[number-1]["tail1"]
+				self.frame=self.frame-1
+				self.LoadNextFrame(None)
+				
+				return 0
+				
+			
 
 if __name__ == "__main__":
 	tesi = TesiDogs()

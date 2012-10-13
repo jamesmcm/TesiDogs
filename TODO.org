@@ -1,9 +1,42 @@
+* TODO Maybe change code to initialise full list on start with empty dicts - will allow frame skipping but break backwards compatibility
+Could modify pkl loading to fix backwards compatibility if assumed older ones are in sequence
+* TODO Or re-write all code to use a dictionary of dictionaries only, this is bug-free
+* TODO Atm can skip lines if cannot see tail, etc. but these CANNOT be the final frame left done - fix this?, also breaks resuming
+* TODO Atm only saves data for current frame when tail2 is clicked
+* TODO What to do with invalid frames??
+* TODO Write R script, 
+R script: modify angles where topbottom=B, then iterate through data
+- in the below half the angle is (90-angle)+90 - but only if default
+is above, if default is below is inverse, make this an option
+frame find max angle, set that to start cycle 1, so on
+
+* TODO make backup data files
+* TODO Add button to reassume old baseline, tail midpoint - forward and backward how to do without 4 buttons, bugs - use menus
+* TODO Fix PNG zooming, panning - reenable support
+* TODO Add overwrite warning
+* TODO Make user guide add to github for interviews
+
+* TODO Fix changing tail base point undraws previous basepoint
+* TODO Make draw tail basepoint not continue if autorun not on, not imporant
+* TODO fix file path issue - on Windows is saving data files to images directory (os.chdir?) - might leave this
+* TODO Add keyboard shortcuts for graph management - undo button
+* TODO Add help screen
+
+* TODO Tidy functions, implement classes, etc.
+* DONE Fix load next frame not drawing tailline
+* DONE Add circle ot base of tail, 
+* DONE make open all files in directory rather than individual files
+* DONE Make reloading data redraw baseline and parallel line - set current base line
+
+* DONE Start at previously finished frame - enable autorun, click tails
+* DONE Add button to save current image
+* DONE Fix screen height bug - make data scrollable!
 * DONE Save extension of tail as well
 * DONE Link Status bar to hovering
 * DONE Fix button disables in modes
 * DONE Fix frame setting on loading data
 * DONE Make Github page
-* TODO Fix PNG zooming, panning - reenable support
+* DONE Fix changing base line doesn't draw parallel line
 * DONE Update Frame numbers in label on changing image
 * DONE Fix label numbers in status bar - copy code from hovering
 * DONE Save data to file and to data viewer
@@ -19,15 +52,13 @@
 * DONE Press escape to cancel current line
 * DONE Add button to set current line mode
 * DONE Display current line mode
-* TODO Add keyboard shortcuts for graph management - undo button
-* TODO Add help screen
 * DONE Add clicking to draw lines - save baseline for all images - http://stackoverflow.com/questions/5021663/how-to-draw-a-line-outside-of-an-axis-in-matplotlib-in-figure-coordinates
 * DONE MPL event handling: http://matplotlib.org/users/event_handling.html
 * DONE Work out how to calculate angles - use vectors from start,endpoints angle is same, dotproduct
 * DONE Link up tool bar items
 * DONE Save data - can edit points, recalculate, etc. but data always being saved
-* TODO Add stuff to calculate useful data - cycles, etc.
+* DONE Add stuff to calculate useful data - cycles, etc. - will use R script instead
 * DONE Speed up loading arrays - deleting and redrawing the problem
 * DONE Add ability to load data file to continue session
-* TODO Fix bugs in file loading window
-* TODO Tidy functions - image creation, etc.
+* DONE Fix bugs in file loading window
+
