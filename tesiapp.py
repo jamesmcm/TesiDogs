@@ -326,6 +326,8 @@ class TesiDogs:
 			if self.points[self.frame]["tail1"]!=None:
 				#point already there, must clear
 				already=True
+			else:
+                                already=False
 			self.currenttail1=(int(round(event.xdata)), int(round(event.ydata)))
 			self.points[self.frame]["tail1"]=(int(round(event.xdata)), int(round(event.ydata)))
                         self.DrawParallelLine()
@@ -656,8 +658,12 @@ class TesiDogs:
         def PickleFileSet(self, widget):
             self.SetClickState("none")
             pklfilename=widget.get_filenames()[0]
-            picklefile=open(pklfilename, "r")
-            temppoints=pickle.load(picklefile)
+            try:
+                picklefile=open(pklfilename, "r")
+                temppoints=pickle.load(picklefile)
+                picklefile.close()
+            except:
+                return 0
 	    if len(temppoints)>len(self.filenames):
 		    if self.curid!=None:
 			    self.builder.get_object("statusbar").remove_message(self.conid, self.curid)
@@ -665,8 +671,7 @@ class TesiDogs:
 		    self.curid=self.builder.get_object("statusbar").push(self.conid, "Error: PKL file had more frames than frames loaded!")
 		    return 0
 
-            self.points=pickle.load(picklefile)
-            picklefile.close()
+            self.points=temppoints
             self.datafilename=pklfilename[:-3]+"dat"
             self.SaveData()
 	    i=0
