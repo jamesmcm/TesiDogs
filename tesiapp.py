@@ -323,11 +323,27 @@ class TesiDogs:
                             self.SetClickState("none")                           
 
 		elif self.clickstate=="tail1":
+			if self.points[self.frame]["tail1"]!=None:
+				#point already there, must clear
+				already=True
 			self.currenttail1=(int(round(event.xdata)), int(round(event.ydata)))
 			self.points[self.frame]["tail1"]=(int(round(event.xdata)), int(round(event.ydata)))
-			self.SetClickState("tail2")
-                        #Draw parallel line and circle
                         self.DrawParallelLine()
+                        if self.points[self.frame]["tail2"]!=None:
+                            self.CalculateAngle()
+
+			if already==True:
+				self.SetClickState("none")
+				self.frame=self.frame-1
+				self.LoadNextFrame(None)
+				
+			
+			if self.autorun==True:
+				self.SetClickState("tail2")
+			else:
+				self.SetClickState("none")
+                        #Draw parallel line and circle
+
 
 		elif self.clickstate=="tail2":
 
@@ -349,21 +365,44 @@ class TesiDogs:
 
         def DrawParallelLine(self):
             if self.currenttail1==None and self.points[self.frame]["tail1"]==None:
-		    return 0;
-	    
-	    if self.points[self.frame]["tail1"]!=None:
-		    circle=Circle(self.points[self.frame]["tail1"], radius=self.circleradius, alpha=self.circlealpha, color="yellow") #put here because here has check for tail1
-	    else:
-		    circle=Circle(self.currenttail1, radius=self.circleradius, alpha=self.circlealpha, color="yellow") #put here because here has check for tail1		    
-	    self.axis.add_patch(circle)
+		    return 0
+	    if self.currenttail1==None:
+		    if self.points[self.frame]["tail1"]==None:
+			    return 0;
+		    else:
+			    self.currenttail1=self.points[self.frame]["tail1"]
+
+	    if self.points[self.frame]["base2"]!=None: #draw actual line
+		    if self.points[self.frame]["tail1"]!=None:
+			    circle=Circle(self.points[self.frame]["tail1"], radius=self.circleradius, alpha=self.circlealpha, color="yellow") #put here because here has check for tail1
+			    basem=(float(self.points[self.frame]["base2"][1]-self.points[self.frame]["base1"][1]))/(float(self.points[self.frame]["base2"][0]-self.points[self.frame]["base1"][0]))
+			    c=self.points[self.frame]["base2"][1]-(basem*self.points[self.frame]["base2"][0])
+			    ydiff=self.points[self.frame]["tail1"][1]-((basem*self.points[self.frame]["tail1"][0])+c) #fails if points[self.frame]["tail1"]==None - should never be called in this case
+			    self.paraline = lines.Line2D(np.array([self.points[self.frame]["base1"][0], self.points[self.frame]["base2"][0]]), np.array([self.points[self.frame]["base1"][1]+ydiff, self.points[self.frame]["base2"][1]+ydiff]), lw=self.linewidth, color='r', alpha=0.3)
+		    else:
+			    circle=Circle(self.currenttail1, radius=self.circleradius, alpha=self.circlealpha, color="yellow") #put here because here has check for tail1		    
+			    basem=(float(self.points[self.frame]["base2"][1]-self.points[self.frame]["base1"][1]))/(float(self.points[self.frame]["base2"][0]-self.points[self.frame]["base1"][0]))
+			    c=self.points[self.frame]["base2"][1]-(basem*self.points[self.frame]["base2"][0])
+			    ydiff=self.currenttail1[1]-((basem*self.currenttail1[0])+c) #fails if currenttail1==None - should never be called in this case
+			    self.paraline = lines.Line2D(np.array([self.points[self.frame]["base1"][0], self.points[self.frame]["base2"][0]]), np.array([self.points[self.frame]["base1"][1]+ydiff, self.points[self.frame]["base2"][1]+ydiff]), lw=self.linewidth, color='r', alpha=0.3)
+
+	    elif self.points[self.frame]["base2"] == None:
+		    if self.points[self.frame]["tail1"]!=None:
+			    circle=Circle(self.points[self.frame]["tail1"], radius=self.circleradius, alpha=self.circlealpha, color="yellow") #put here because here has check for tail1
+			    basem=(float(self.currentbase2[1]-self.currentbase1[1]))/(float(self.currentbase2[0]-self.currentbase1[0]))
+			    c=self.currentbase2[1]-(basem*self.currentbase2[0])
+			    ydiff=self.points[self.frame]["tail1"][1]-((basem*self.points[self.frame]["tail1"][0])+c) #fails if points[self.frame]["tail1"]==None - should never be called in this case
+			    self.paraline = lines.Line2D(np.array([self.currentbase1[0], self.currentbase2[0]]), np.array([self.currentbase1[1]+ydiff, self.currentbase2[1]+ydiff]), lw=self.linewidth, color='r', alpha=0.3)
+		    else:
+			    circle=Circle(self.currenttail1, radius=self.circleradius, alpha=self.circlealpha, color="yellow") #put here because here has check for tail1		    
+			    basem=(float(self.currentbase2[1]-self.currentbase1[1]))/(float(self.currentbase2[0]-self.currentbase1[0]))
+			    c=self.currentbase2[1]-(basem*self.currentbase2[0])
+			    ydiff=self.currenttail1[1]-((basem*self.currenttail1[0])+c) #fails if currenttail1==None - should never be called in this case
+			    self.paraline = lines.Line2D(np.array([self.currentbase1[0], self.currentbase2[0]]), np.array([self.currentbase1[1]+ydiff, self.currentbase2[1]+ydiff]), lw=self.linewidth, color='r', alpha=0.3)
 
 
-
-            basem=(float(self.currentbase2[1]-self.currentbase1[1]))/(float(self.currentbase2[0]-self.currentbase1[0]))
-            c=self.currentbase2[1]-(basem*self.currentbase2[0])
-            ydiff=self.currenttail1[1]-((basem*self.currenttail1[0])+c) #fails if currenttail1==None - should never be called in this case
-            self.paraline = lines.Line2D(np.array([self.currentbase1[0], self.currentbase2[0]]), np.array([self.currentbase1[1]+ydiff, self.currentbase2[1]+ydiff]), lw=self.linewidth, color='r', alpha=0.3)
             self.axis.add_line(self.paraline)
+	    self.axis.add_patch(circle)
             self.canvas.draw()
             
         def GetKeyPress(self, widget, event):
@@ -560,19 +599,31 @@ class TesiDogs:
                 except:
                     tail2ylist.append("NA")
                 try:
-                    anglelist.append(item["angle"])
+                    if item["angle"]!=None:
+			    anglelist.append(item["angle"])
+		    else:
+			    anglelist.append("NA")
                 except:
                     anglelist.append("NA")
                 try:
-                    sidelist.append(item["side"])
+                    if item["side"]!=None:
+			    sidelist.append(item["side"])
+		    else:
+			    sidelist.append("NA")
                 except:
                     sidelist.append("NA")
                 try:
-                    topbottomlist.append(item["topbottom"])
+                    if item["topbottom"]!=None:
+			    topbottomlist.append(item["topbottom"])
+		    else:
+			    topbottomlist.append("NA")
                 except:
                     topbottomlist.append("NA")
                 try:
-                    lengthlist.append(item["length"])
+                    if item["length"]!=None:
+			    lengthlist.append(item["length"])
+		    else:
+			    lengthlist.append("NA")
                 except:
                     lengthlist.append("NA")
 
@@ -606,6 +657,14 @@ class TesiDogs:
             self.SetClickState("none")
             pklfilename=widget.get_filenames()[0]
             picklefile=open(pklfilename, "r")
+            temppoints=pickle.load(picklefile)
+	    if len(temppoints)>len(self.filenames):
+		    if self.curid!=None:
+			    self.builder.get_object("statusbar").remove_message(self.conid, self.curid)
+                
+		    self.curid=self.builder.get_object("statusbar").push(self.conid, "Error: PKL file had more frames than frames loaded!")
+		    return 0
+
             self.points=pickle.load(picklefile)
             picklefile.close()
             self.datafilename=pklfilename[:-3]+"dat"
@@ -712,6 +771,8 @@ class TesiDogs:
 				self.currentbase2=self.points[number-1]["base2"]
 				self.frame=self.frame-1
 				self.LoadNextFrame(None)
+				if self.points[self.frame]["tail2"]!=None:
+					self.CalculateAngle()
 
 		if self.copybtn=="tail":
 			if self.points[number-1]["tail1"]==None:
@@ -727,7 +788,9 @@ class TesiDogs:
 				self.currenttail1=self.points[number-1]["tail1"]
 				self.frame=self.frame-1
 				self.LoadNextFrame(None)
-				
+				if self.points[self.frame]["tail2"]!=None:
+					self.CalculateAngle()
+
 				return 0
 				
 			

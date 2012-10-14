@@ -1,3 +1,6 @@
+* TODO Make copy base tail modify the current tail point used for future images - make autorun overwrite the next images with current base current tail even if existing
+
+* ---
 * TODO Maybe change code to initialise full list on start with empty dicts - will allow frame skipping but break backwards compatibility
 Could modify pkl loading to fix backwards compatibility if assumed older ones are in sequence
 * TODO Or re-write all code to use a dictionary of dictionaries only, this is bug-free
@@ -23,6 +26,12 @@ frame find max angle, set that to start cycle 1, so on
 * TODO Add help screen
 
 * TODO Tidy functions, implement classes, etc.
+* DONE Write NAs instead of None for length, etc.
+* DONE Ensure saves data and recalculates angles on changing base line, base tail - copying both!
+* DONE Fix display bugs on moving tail point - doesn't clear old lines
+* DONE Fix display bug on DrawParallelLine - gives currentbase precedence actual existing base on parallel line drawing
+* DONE Add error if attempting to load PKL file with more entries than frames loaded
+
 * DONE Fix load next frame not drawing tailline
 * DONE Add circle ot base of tail, 
 * DONE make open all files in directory rather than individual files
